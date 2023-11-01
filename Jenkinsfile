@@ -16,7 +16,7 @@ pipeline {
                     sh 'docker compose build'
 
                     // Tag the Docker image
-                    sh 'docker tag nginx:latest karthikeyanrajan/karthidev:latest'
+                    sh 'docker tag reactjs-demo:latest karthikeyanrajan/karthidev:latest'
 
                     // Display a list of Docker images
                     sh 'docker images'
