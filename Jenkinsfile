@@ -19,7 +19,7 @@ pipeline {
                     sh 'docker tag reactjs-demo:latest karthikeyanrajan/karthidev:latest'
 
                     // Display a list of Docker images
-                    sh 'docker imagges'
+                    sh 'docker images'
                 }
             }
         }
