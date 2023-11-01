@@ -37,15 +37,32 @@ pipeline {
     }
     post {
         success {
-            emailext to: 'karthisk217@gmail.com',
-            subject: 'Jenkins Build Successful',
-            body: 'The build was successful. You can view the build log [here](${BUILD_URL}console)'.toString()
+            script {
+                if (env.BRANCH_NAME == 'dev') {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: 'Jenkins Build Successful - Dev Branch',
+                    body: 'The build on the dev branch was successful. You can view the build log [here](${BUILD_URL}console)'.toString()
+                } else if (env.BRANCH_NAME == 'master') {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: 'Jenkins Build Successful - Master Branch',
+                    body: 'The build on the master branch was successful. You can view the build log [here](${BUILD_URL}console)'.toString()
+                }
+            }
         }
         failure {
-            emailext to: 'karthisk217@gmail.com',
-            subject: 'Jenkins Build Failed',
-            body: 'The build has failed. You can view the build log [here](${BUILD_URL}console)'.toString(),
-            attachLog: true
+            script {
+                if (env.BRANCH_NAME == 'dev') {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: 'Jenkins Build Failed - Dev Branch',
+                    body: 'The build on the dev branch has failed. You can view the build log [here](${BUILD_URL}console)'.toString(),
+                    attachLog: true
+                } else if (env.BRANCH_NAME == 'master') {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: 'Jenkins Build Failed - Master Branch',
+                    body: 'The build on the master branch has failed. You can view the build log [here](${BUILD_URL}console)'.toString(),
+                    attachLog: true
+                }
+            }
         }
     }
 }
