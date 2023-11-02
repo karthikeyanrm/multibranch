@@ -50,7 +50,7 @@ fi
                     sh 'docker pull karthikeyanrajan/dev:latest'
 
                     // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
+                    sh 'docker run -d -p 80:80 --name reactjscontainer1 karthikeyanrajan/dev:latest'
                 }
             }
         }
