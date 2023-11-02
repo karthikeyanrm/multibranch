@@ -50,41 +50,23 @@ fi
                     sh 'docker pull karthikeyanrajan/dev:latest'
 
                     // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev1:latest'
+                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
                 }
             }
         }
+    }
 
-        stage('Email Notification - Success') {
-            when {
-                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-            }
-            steps {
-                script {
-                    if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
-                        emailext subject: "Build #${BUILD_NUMBER} - Success",
-                            body: "The build was successful. Check the attached log for details.",
-                            to: 'karthisk217@gmail.com',  // Your email address
-                            attachLog: true
-                    }
-                }
-            }
+    post {
+        success {
+            emailext to: 'karthisk217@gmail.com',
+            subject: 'Jenkins Build Successful - Your Custom Subject',
+            body: 'The build was successful. You can view the build log [here](${BUILD_URL}console)'.toString()
         }
-
-        stage('Email Notification - Failure') {
-            when {
-                expression { currentBuild.resultIsWorseOrEqualTo('FAILURE') }
-            }
-            steps {
-                script {
-                    if (currentBuild.resultIsWorseOrEqualTo('FAILURE')) {
-                        emailext subject: "Build #${BUILD_NUMBER} - Failure",
-                            body: "The build failed. Check the attached log for details.",
-                            to: 'karthisk217@gmail.com',  // Your email address
-                            attachLog: true
-                    }
-                }
-            }
+        failure {
+            emailext to: 'karthisk217@gmail.com',
+            subject: 'Jenkins Build Failed - Your Custom Subject',
+            body: 'The build has failed. You can view the build log [here](${BUILD_URL}console)'.toString(),
+            attachLog: true
         }
     }
 }
