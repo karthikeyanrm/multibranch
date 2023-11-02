@@ -6,7 +6,7 @@ pipeline {
     }
 
     stages {
-        stage('Build and Deploy') {
+        stage('Prepare and Deploy') {
             steps {
                 script {
                     // Build Docker Compose
@@ -24,6 +24,9 @@ pipeline {
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
                     sh 'docker rmi -f karthikeyanrajan/dev:latest'
+
+                    // Grant execute permission to the script
+                    sh 'chmod +x containercheckscript.sh'
 
                     // Call the external script to check the container state
                     sh './containercheckscript.sh'
