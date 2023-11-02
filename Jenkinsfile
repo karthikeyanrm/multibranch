@@ -36,7 +36,7 @@ pipeline {
 
                 // Check if any exited and running containers exist
                 script {
-                    excited_running_containers = sh(script: 'docker ps -q --filter "status=exited" --filter "status=running"', returnStatus: true).trim()
+                    excited_running_containers = sh(script: 'docker ps -aq --filter "status=exited" --filter "status=running"', returnStatus: true).trim()
 
                     if (excited_running_containers) {
                         echo "Found exited and/or running containers:"
