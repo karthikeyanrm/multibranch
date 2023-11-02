@@ -25,16 +25,8 @@ pipeline {
                     sh 'docker rmi -f reactjs-demo:latest'
                     sh 'docker rmi -f karthikeyanrajan/dev:latest'
 
-                    // Check if the container is running
-                    def isContainerRunning = sh(script: 'docker ps -q -f name=reactjscontainer', returnStatus: true) == 0
-
-                    if (isContainerRunning) {
-                        echo 'A container with the name "reactjscontainer" is running. Stopping and removing it.'
-                        sh 'docker stop reactjscontainer'
-                        sh 'docker rm reactjscontainer'
-                    } else {
-                        echo 'No running container with the name "reactjscontainer" found.'
-                    }
+                    // Call the external script to check the container state
+                    sh './containercheckscript.sh'
 
                     // Pull the image
                     sh 'docker pull karthikeyanrajan/dev:latest'
