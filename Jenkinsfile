@@ -6,7 +6,20 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from your version control system (e.g., Git)
+                script {
+                    // This stage is necessary to get the current branch information
+                    checkout scm
+                }
+            }
+        }
+
         stage('Build and Deploy') {
+            when {
+                expression { currentBuild.changeSets.any { it.branch == 'origin/dev' } }
+            }
             steps {
                 script {
                     // Build Docker Compose
@@ -51,6 +64,17 @@ fi
 
                     // Run the container
                     sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
+                }
+            }
+        }
+        
+        stage('List Files') {
+            when {
+                expression { currentBuild.changeSets.any { it.branch == 'origin/dev' } }
+            }
+            steps {
+                script {
+                    sh 'ls -al'
                 }
             }
         }
