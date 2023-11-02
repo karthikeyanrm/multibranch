@@ -54,5 +54,26 @@ fi
                 }
             }
         }
+
+        stage('Email Notification') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                script {
+                    if (currentBuild.resultIsSuccessful()) {
+                        emailext subject: "Build #${BUILD_NUMBER} - Success",
+                            body: "The build was successful. Check the attached log for details.",
+                            to: 'recipient@example.com',  // Change to the recipient's email address
+                            attachLog: true
+                    } else {
+                        emailext subject: "Build #${BUILD_NUMBER} - Failure",
+                            body: "The build failed. Check the attached log for details.",
+                            to: 'recipient@example.com',  // Change to the recipient's email address
+                            attachLog: true
+                    }
+                }
+            }
+        }
     }
 }
