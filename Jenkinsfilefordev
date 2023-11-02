@@ -47,7 +47,7 @@ fi
 ''', returnStdout: true).trim()
 
                     // Pull the image
-                    sh 'docker pull karthikeyanrajan/dev:latest'
+                    sh 'docker pull karthikeyanrajan/dev6:latest'
 
                     // Run the container
                     sh 'docker run -d -p 80:80 --name reactjscontainer1 karthikeyanrajan/dev:latest'
