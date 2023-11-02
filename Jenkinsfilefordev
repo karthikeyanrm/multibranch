@@ -47,15 +47,15 @@ fi
 ''', returnStdout: true).trim()
 
                     // Pull the image
-                    sh 'docker pull karthikeyanrajan/dev6:latest'
+                    sh 'docker pull karthikeyanrajan/dev:latest'
 
                     // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer1 karthikeyanrajan/dev:latest'
+                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
                 }
             }
         }
 
-        stage('Email Notification') {
+        stage('Email Notification - Success') {
             when {
                 expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
             }
@@ -64,12 +64,23 @@ fi
                     if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
                         emailext subject: "Build #${BUILD_NUMBER} - Success",
                             body: "The build was successful. Check the attached log for details.",
-                            to: 'karthisk217@gmail.com',  // Updated email address
+                            to: 'karthisk217@gmail.com',  // Your email address
                             attachLog: true
-                    } else {
+                    }
+                }
+            }
+        }
+
+        stage('Email Notification - Failure') {
+            when {
+                expression { currentBuild.resultIsWorseOrEqualTo('FAILURE') }
+            }
+            steps {
+                script {
+                    if (currentBuild.resultIsWorseOrEqualTo('FAILURE')) {
                         emailext subject: "Build #${BUILD_NUMBER} - Failure",
                             body: "The build failed. Check the attached log for details.",
-                            to: 'karthisk217@gmail.com',  // Updated email address
+                            to: 'karthisk217@gmail.com',  // Your email address
                             attachLog: true
                     }
                 }
