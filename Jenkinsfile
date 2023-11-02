@@ -6,7 +6,7 @@ pipeline {
     }
 
     stages {
-        stage('Build and Tag') {
+        stage('Build and Deploy') {
             steps {
                 script {
                     // Build Docker Compose
@@ -14,31 +14,17 @@ pipeline {
 
                     // Tag the image
                     sh 'docker tag reactjs-demo:latest karthikeyanrajan/dev:latest'
-                }
-            }
-        }
 
-        stage('Push and Clean Up') {
-            steps {
-                script {
-                    // Log in to Docker Hub
+                    // Log in to Docker Hub securely
                     withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
+                        sh 'docker push karthikeyanrajan/dev:latest'
                     }
-
-                    // Push the image
-                    sh 'docker push karthikeyanrajan/dev:latest'
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
                     sh 'docker rmi -f karthikeyanrajan/dev:latest'
-                }
-            }
-        }
 
-        stage('Check and Cleanup') {
-            steps {
-                script {
                     // Check if the container is running
                     def isContainerRunning = sh(script: 'docker ps -q -f name=reactjscontainer', returnStatus: true) == 0
 
