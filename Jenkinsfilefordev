@@ -18,7 +18,7 @@ pipeline {
                     // Log in to Docker Hub securely
                     withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
-                        sh 'docker push karthikeyanrajan/dev:latest'
+                        sh 'docker push karthikeyanrm/devrepo:latest'
                     }
 
                     // Remove local images
@@ -50,7 +50,7 @@ fi
                     sh 'docker pull karthikeyanrm/devrepo:latest'
 
                     // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
+                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
                 }
             }
         }
