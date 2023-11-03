@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIAL_ID = 'DOCKER_HUB_CREDENTIAL_ID'
-        DOCKER_PASSWORD = credentials('DOCKER_HUB_CREDENTIAL_ID')
+        DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
     }
 
     stages {
@@ -17,40 +16,36 @@ pipeline {
                     sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
 
                     // Log in to Docker Hub securely
-                    withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'LOGIN_PASS')]) {
-                        sh "echo $LOGIN_PASS | docker login -u $DOCKER_USERNAME --password-stdin"
+                    withCredentials([
+                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
+                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         sh 'docker push karthikeyanrm/devrepo:latest'
-                        sh 'docker logout'
                     }
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
                     sh 'docker rmi -f karthikeyanrm/devrepo:latest'
-                }
-            }
-        }
 
-        stage('Deploy') {
-            steps {
-                script {
                     // Check if any containers with the name "reactjscontainer" are either exited or running
                     containers_to_remove = sh(script: '''
-                        # Check if any containers with the name "reactjscontainer" are either exited or running
-                        containers_to_remove=$(docker ps -q --filter "name=reactjscontainer" --filter "status=exited" --filter "status=running")
+#!/bin/bash
 
-                        if [ -n "$containers_to_remove" ]; then
-                          echo "Found exited and/or running containers with the name 'reactjscontainer':"
-                          echo "$containers_to_remove"
+# Check if any containers with the name "reactjscontainer" are either exited or running
+containers_to_remove=$(docker ps -q --filter "name=reactjscontainer" --filter "status=exited" --filter "status=running")
 
-                          # Stop and forcefully remove the containers
-                          docker stop $containers_to_remove
-                          docker rm -f $containers_to_remove
+if [ -n "$containers_to_remove" ]; then
+  echo "Found exited and/or running containers with the name 'reactjscontainer':"
+  echo "$containers_to_remove"
 
-                          echo "Containers with the name 'reactjscontainer' have been removed."
-                        else
-                          echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
-                        fi
-                    ''', returnStdout: true).trim()
+  # Stop and forcefully remove the containers
+  docker stop $containers_to_remove
+  docker rm -f $containers_to_remove
+
+  echo "Containers with the name 'reactjscontainer' have been removed."
+else
+  echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
+fi
+''', returnStdout: true).trim()
 
                     // Pull the image
                     sh 'docker pull karthikeyanrm/devrepo:latest'
@@ -73,13 +68,17 @@ ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v pub
 """,
             attachLog: true // Attach build log for success email
         }
-
         failure {
-
             emailext to: 'karthisk217@gmail.com',
             subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
             body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
             attachLog: true // Attach build log for failure email
+        }
+    }
+    post {
+        always {
+            // Log out from Docker Hub
+            sh 'docker logout'
         }
     }
 }
