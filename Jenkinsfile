@@ -11,7 +11,7 @@ pipeline {
                 script {
                     // Build Docker Compose
                     sh 'docker-compose build'
-
+                    sh 'docker images'
                     // Tag the image
                     sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
 
