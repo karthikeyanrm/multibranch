@@ -1,15 +1,1 @@
- hellofiles.txt
-root@karthikeyan-vm-3:~/multibranch# git push origin master
-Enumerating objects: 1, done.
-Counting objects: 100% (1/1), done.
-Writing objects: 100% (1/1), 221 bytes | 221.00 KiB/s, done.
-Total 1 (delta 0), reused 0 (delta 0), pack-reused 0
-To https://github.com/karthikeyanrm/multibranch.git
-   92947e2..85b4563  master -> master
-root@karthikeyan-vm-3:~/multibranch# docker stop $(docker ps -q --filter ancestor=karthikeyanrajan/prod:latest) && docker rm -f $(docker ps -aq --filter ancestor=karthikeyanrajan/prod:latest)
-"docker stop" requires at least 1 argument.
-See 'docker stop --help'.
-
-Usage:  docker stop [OPTIONS] CONTAINER [CONTAINER...]
-
-
+new files are availabe
