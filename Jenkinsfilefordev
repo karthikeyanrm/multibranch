@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HUB_CREDENTIAL = credentials('DOCKER_HUB_CREDENTIAL_ID') // Use the correct credential ID
     }
-    
+
     stages {
         stage('Build and Deploy') {
             steps {
@@ -19,7 +19,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIAL_ID', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
                     }
-                    
+
                     sh 'docker push karthikeyanrm/devrepo:latest'
                 }
             }
@@ -38,11 +38,19 @@ pipeline {
                             docker stop $containers_to_remove
                             docker rm -f $containers_to_remove
                             echo "Containers with the name 'reactjscontainer' have been removed."
+                            exit 0 // Set a successful exit status
                         else
                             echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
-                        fi
+                            exit 1 // Set a failure exit status
+                        }
                     ''', returnStatus: true).trim()
-                    
+
+                    if (containers_to_remove == '0') {
+                        currentBuild.result = 'SUCCESS'
+                    } else {
+                        currentBuild.result = 'FAILURE'
+                    }
+
                     // Pull the image
                     sh 'docker pull karthikeyanrm/devrepo:latest'
 
