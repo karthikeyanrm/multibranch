@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIAL_ID = 'DOCKER_HUB_CREDENTIAL_ID'
-        DOCKER_PASSWORD = credentials('DOCKER_HUB_CREDENTIAL_ID')
+        DOCKER_PASSWORD_PSW = credentials('DOCKER_HUB_CREDENTIAL_ID')
     }
 
     stages {
@@ -17,7 +17,7 @@ pipeline {
                     sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
 
                     // Log in to Docker Hub securely
-                    withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD_PSW')]) {
                         sh "echo $DOCKER_PASSWORD_USR:$DOCKER_PASSWORD_PSW | docker login -u $DOCKER_USERNAME --password-stdin"
                         sh 'docker push karthikeyanrm/devrepo:latest'
                     }
