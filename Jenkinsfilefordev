@@ -4,8 +4,9 @@ pipeline {
     environment {
         DOCKER_HUB_CREDENTIAL = credentials('DOCKER_HUB_CREDENTIAL_ID')
     }
+    
     stages {
-        stage('Build and Deploy') {
+        stage('Build ') {
             steps {
                 script {
                     // Build Docker Compose
@@ -15,13 +16,11 @@ pipeline {
                     sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
 
                     // Log in to Docker Hub securely
-                        sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKER_USERNAME --password-stdin"
-                        sh 'docker push karthikeyanrm/devrepo:latest'
+                    withCredentials([string(credentialsId: 'DOCKER_HUB_CREDENTIAL_ID', variable: 'DOCKER_HUB_CREDENTIAL')]) {
+                        sh "echo \$DOCKER_HUB_CREDENTIAL | docker login -u \$DOCKER_USERNAME --password-stdin"
                     }
-
-                    // Remove local images
-                    sh 'docker rmi -f reactjs-demo:latest'
-                    sh 'docker rmi -f karthikeyanrm/devrepo:latest'
+                    
+                    sh 'docker push karthikeyanrm/devrepo:latest'
                 }
             }
         }
@@ -30,24 +29,20 @@ pipeline {
             steps {
                 script {
                     // Check if any containers with the name "reactjscontainer" are either exited or running
-                    containers_to_remove = sh(script: '''
-                        # Check if any containers with the name "reactjscontainer" are either exited or running
+                    def containers_to_remove = sh(script: '''
                         containers_to_remove=$(docker ps -q --filter "name=reactjscontainer" --filter "status=exited" --filter "status=running")
 
                         if [ -n "$containers_to_remove" ]; then
-                          echo "Found exited and/or running containers with the name 'reactjscontainer':"
-                          echo "$containers_to_remove"
-
-                          # Stop and forcefully remove the containers
-                          docker stop $containers_to_remove
-                          docker rm -f $containers_to_remove
-
-                          echo "Containers with the name 'reactjscontainer' have been removed."
+                            echo "Found exited and/or running containers with the name 'reactjscontainer':"
+                            echo "$containers_to_remove"
+                            docker stop $containers_to_remove
+                            docker rm -f $containers_to_remove
+                            echo "Containers with the name 'reactjscontainer' have been removed."
                         else
-                          echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
+                            echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
                         fi
-                    ''', returnStdout: true).trim()
-
+                    ''', returnStatus: true).trim()
+                    
                     // Pull the image
                     sh 'docker pull karthikeyanrm/devrepo:latest'
 
@@ -76,9 +71,10 @@ ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v pub
             attachLog: true // Attach build log for failure email
         }
     }
-always {  
-      sh 'docker logout'           
-    }      
+    
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
 }
-
-
