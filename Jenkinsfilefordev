@@ -74,7 +74,7 @@ Docker Container Info:
 ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
 """,
 
-Dev build is success do changes in your Jenkinsfile and merge it to the master for the production
+{ Dev build is success do changes in your Jenkinsfile and merge it to the master for the production}
                 attachLog: true // Attach build log for success email
             }
         }
