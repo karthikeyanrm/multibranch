@@ -38,17 +38,15 @@ pipeline {
                             docker stop $containers_to_remove
                             docker rm -f $containers_to_remove
                             echo "Containers with the name 'reactjscontainer' have been removed."
-                            exit 0 // Set a successful exit status
                         else
                             echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
-                            exit 1 // Set a failure exit status
-                        }
+                        fi
                     ''', returnStatus: true).trim()
 
-                    if (containers_to_remove == '0') {
-                        currentBuild.result = 'SUCCESS'
-                    } else {
+                    if (containers_to_remove) {
                         currentBuild.result = 'FAILURE'
+                    } else {
+                        currentBuild.result = 'SUCCESS'
                     }
 
                     // Pull the image
