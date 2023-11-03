@@ -13,7 +13,7 @@ pipeline {
                     sh 'docker-compose build'
 
                     // Tag the image
-                    sh 'docker tag reactjs-demo:latest karthikeyanrajan/dev:latest'
+                    sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
 
                     // Log in to Docker Hub securely
                     withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -23,7 +23,7 @@ pipeline {
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
-                    sh 'docker rmi -f karthikeyanrajan/dev:latest'
+                    sh 'docker rmi -f karthikeyanrm/devrepo:latest'
 
                     // Check if any containers with the name "reactjscontainer" are either exited or running
                     containers_to_remove = sh(script: '''
@@ -47,7 +47,7 @@ fi
 ''', returnStdout: true).trim()
 
                     // Pull the image
-                    sh 'docker pull karthikeyanrajan/dev:latest'
+                    sh 'docker pull karthikeyanrm/devrepo:latest'
 
                     // Run the container
                     sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrajan/dev:latest'
