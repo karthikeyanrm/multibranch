@@ -2,10 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIAL_ID = 'DOCKER_HUB_CREDENTIAL_ID'
-        DOCKER_PASSWORD_PSW = credentials('DOCKER_HUB_CREDENTIAL_ID')
+        DOCKER_HUB_CREDENTIAL = credentials('DOCKER_HUB_CREDENTIAL_ID')
     }
-
     stages {
         stage('Build and Deploy') {
             steps {
@@ -17,8 +15,7 @@ pipeline {
                     sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
 
                     // Log in to Docker Hub securely
-                    withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD_PSW')]) {
-                        sh "echo $DOCKER_PASSWORD_USR:$DOCKER_PASSWORD_PSW | docker login -u $DOCKER_USERNAME --password-stdin"
+                        sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKER_USERNAME --password-stdin"
                         sh 'docker push karthikeyanrm/devrepo:latest'
                     }
 
@@ -41,14 +38,14 @@ pipeline {
                           echo "Found exited and/or running containers with the name 'reactjscontainer':"
                           echo "$containers_to_remove"
 
-                          // Stop and forcefully remove the containers
+                          # Stop and forcefully remove the containers
                           docker stop $containers_to_remove
                           docker rm -f $containers_to_remove
 
                           echo "Containers with the name 'reactjscontainer' have been removed."
-                        else {
+                        else
                           echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
-                        }
+                        fi
                     ''', returnStdout: true).trim()
 
                     // Pull the image
@@ -78,8 +75,10 @@ ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v pub
             body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
             attachLog: true // Attach build log for failure email
         }
-        always {
-            sh 'docker logout'
-        }
     }
+always {  
+      sh 'docker logout'           
+    }      
 }
+
+
