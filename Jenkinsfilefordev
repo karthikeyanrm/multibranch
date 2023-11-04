@@ -9,54 +9,31 @@ pipeline {
     }
 
     stages {
-        stage('Build and Deploy - Dev Branch') {
+        stage('Build and Deploy') {
             when {
-                branch 'dev' // This stage will run only on the 'dev' branch
+                expression { true } // Always execute this stage
             }
             steps {
                 script {
+                    // Determine the image name based on the branch
+                    def imageName = branch == 'master' ? PROD_IMAGE_NAME : DEV_IMAGE_NAME
+
                     // Build Docker Compose or your application
                     sh 'docker-compose build' // Change to your build command if not using Docker Compose
 
                     // Tag the image
-                    sh "docker tag reactjs-demo:latest $DEV_IMAGE_NAME"
+                    sh "docker tag reactjs-demo:latest $imageName"
 
                     // Log in to Docker Hub securely
                     withCredentials([
                         usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
                         sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh "docker push $DEV_IMAGE_NAME"
+                        sh "docker push $imageName"
                     }
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
-                    sh "docker rmi -f $DEV_IMAGE_NAME"
-                }
-            }
-        }
-
-        stage('Build and Deploy - Master Branch') {
-            when {
-                branch 'master' // This stage will run only on the 'master' branch
-            }
-            steps {
-                script {
-                    // Build Docker Compose or your application
-                    sh 'docker-compose build' // Change to your build command if not using Docker Compose
-
-                    // Tag the image
-                    sh "docker tag reactjs-demo:latest $PROD_IMAGE_NAME"
-
-                    // Log in to Docker Hub securely
-                    withCredentials([
-                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
-                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh "docker push $PROD_IMAGE_NAME"
-                    }
-
-                    // Remove local images
-                    sh 'docker rmi -f reactjs-demo:latest'
-                    sh "docker rmi -f $PROD_IMAGE_NAME"
+                    sh "docker rmi -f $imageName"
                 }
             }
         }
