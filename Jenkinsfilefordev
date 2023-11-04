@@ -3,81 +3,60 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
-        DEV_IMAGE_TAG = 'karthikeyanrm/devrepo:latest'
-        PROD_IMAGE_TAG = 'karthikeyanrm/prodrepo:latest'
+        CONTAINER_NAME = 'reactjscontainer'
+        DEV_IMAGE_NAME = 'karthikeyanrm/devrepo:latest'
+        PROD_IMAGE_NAME = 'karthikeyanrm/prodrepo:latest'
     }
 
     stages {
-        stage('Build and Push Docker Image') {
+        stage('Build and Deploy - Dev Branch') {
+            when {
+                branch 'dev' // This stage will run only on the 'dev' branch
+            }
             steps {
                 script {
-                    try {
-                        // Build Docker Compose
-                        sh 'docker-compose build'
-                        
-                        // Tag the image based on branch
-                        def imageTag
-                        if (env.BRANCH_NAME == 'dev') {
-                            imageTag = DEV_IMAGE_TAG
-                        } else if (env.BRANCH_NAME == 'master') {
-                            imageTag = PROD_IMAGE_TAG
-                        } else {
-                            error "Unsupported branch: ${env.BRANCH_NAME}"
-                        }
-                        
-                        // Print the image tag for debugging
-                        echo "Image tag: ${imageTag}"
-                        
-                        // Tag the image
-                        sh "docker tag reactjs-demo:latest ${imageTag}"
-                        
-                        // Log in to Docker Hub securely
-                        withCredentials([
-                            usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
-                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                            sh "docker push ${imageTag}"
-                        }
-                        
-                        // Remove local images
-                        sh 'docker rmi -f reactjs-demo:latest'
-                        sh "docker rmi -f ${imageTag}"
-                    } catch (Exception e) {
-                        currentBuild.result = 'FAILURE'
-                        error "An error occurred: ${e.getMessage()}"
+                    // Build Docker Compose or your application
+                    sh 'docker-compose build' // Change to your build command if not using Docker Compose
+
+                    // Tag the image
+                    sh "docker tag reactjs-demo:latest $DEV_IMAGE_NAME"
+
+                    // Log in to Docker Hub securely
+                    withCredentials([
+                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
+                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                        sh "docker push $DEV_IMAGE_NAME"
                     }
+
+                    // Remove local images
+                    sh 'docker rmi -f reactjs-demo:latest'
+                    sh "docker rmi -f $DEV_IMAGE_NAME"
                 }
             }
         }
-        
-        stage('Deploy') {
+
+        stage('Build and Deploy - Master Branch') {
             when {
-                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+                branch 'master' // This stage will run only on the 'master' branch
             }
             steps {
                 script {
-                    try {
-                        // Stop and remove existing containers with the name "reactjscontainer"
-                        sh 'docker stop reactjscontainer || true'
-                        sh 'docker rm reactjscontainer || true'
-                        
-                        // Run the container based on branch
-                        def imageToRun
-                        if (env.BRANCH_NAME == 'dev') {
-                            imageToRun = DEV_IMAGE_TAG
-                        } else if (env.BRANCH_NAME == 'master') {
-                            imageToRun = PROD_IMAGE_TAG
-                        } else {
-                            error "Unsupported branch: ${env.BRANCH_NAME}"
-                        }
-                        
-                        // Print the image to run for debugging
-                        echo "Image to run: ${imageToRun}"
-                        
-                        sh "docker run -d -p 80:80 --name reactjscontainer ${imageToRun}"
-                    } catch (Exception e) {
-                        currentBuild.result = 'FAILURE'
-                        error "An error occurred: ${e.getMessage()}"
+                    // Build Docker Compose or your application
+                    sh 'docker-compose build' // Change to your build command if not using Docker Compose
+
+                    // Tag the image
+                    sh "docker tag reactjs-demo:latest $PROD_IMAGE_NAME"
+
+                    // Log in to Docker Hub securely
+                    withCredentials([
+                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
+                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                        sh "docker push $PROD_IMAGE_NAME"
                     }
+
+                    // Remove local images
+                    sh 'docker rmi -f reactjs-demo:latest'
+                    sh "docker rmi -f $PROD_IMAGE_NAME"
                 }
             }
         }
