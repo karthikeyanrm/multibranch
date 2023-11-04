@@ -18,7 +18,11 @@ pipeline {
 
                         // Log in to Docker Hub securely
                         withCredentials([
-                            usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD'
+                            usernamePassword(
+                                credentialsId: DOCKER_HUB_CREDENTIAL_ID,
+                                usernameVariable: 'DOCKER_USERNAME',
+                                passwordVariable: 'MY_SECURE_PASSWORD'
+                            )
                         ]) {
                             sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         }
