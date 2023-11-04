@@ -72,25 +72,24 @@ pipeline {
 
     post {
         success {
-            // Archive the build log
-            archiveArtifacts 'build.log'
+            script {
+                emailext to: 'karthisk217@gmail.com',
+                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                body: """The build #${BUILD_NUMBER} was successful. You can view the build log [here](${BUILD_URL}console).
 
-            // Send a success email with the attached log
-            emailext subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
-                to: 'karthisk217@gmail.com',
-                body: 'The pipeline has succeeded. Build details are attached.',
-                attachLog: true
+Docker Container Info:
+${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
+""",
+                attachLog: true // Attach build log for success email
+            }
         }
-
         failure {
-            // Archive the build log
-            archiveArtifacts 'build.log'
-
-            // Send a failure email with the attached log
-            emailext subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                to: 'karthisk217@gmail.com',
-                body: 'The pipeline has failed. Build details are attached.',
-                attachLog: true
+            script {
+                emailext to: 'karthisk217@gmail.com',
+                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
+                attachLog: true // Attach build log for failure email
+            }
         }
     }
 }
