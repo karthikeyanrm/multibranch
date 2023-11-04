@@ -38,8 +38,6 @@ pipeline {
                         sh 'docker pull karthikeyanrm/devrepo:latest'
                         sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
                     } else if (currentBranch ==~ /master/) {
-                        sh 'timedatectl'
-
                         // Log in to Docker Hub securely
                         withCredentials([
                             usernamePassword(
@@ -49,9 +47,12 @@ pipeline {
                             )
                         ]) {
                             sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                            sh 'docker push karthikeyanrm/devrepo:latest'
                         }
+                        sh 'timedatectl'
 
                         // Add the additional Docker commands for 'master'
+                        sh 'docker login -u $DOCKER_USERNAME -p $MY_SECURE_PASSWORD'
                         sh 'docker-compose build'
                         sh 'docker images'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
@@ -67,6 +68,33 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            script {
+                emailext to: 'karthisk217@gmail.com',
+                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                body: """The build #${BUILD_NUMBER} was successful. You can view the build log [here](${BUILD_URL}console).
+
+Docker Container Info:
+${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
+""",
+                attachLog: true // Attach build log for success email
+            }
+        }
+        failure {
+            script {
+                emailext to: 'karthisk217@gmail.com',
+                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
+                attachLog: true // Attach build log for failure email
+            }
+        }
+        always {
+            // Log out from Docker Hub
+            sh 'docker logout'
         }
     }
 }
