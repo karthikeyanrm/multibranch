@@ -69,4 +69,28 @@ pipeline {
             }
         }
     }
+
+    post {
+        success {
+            // Archive the build log
+            archiveArtifacts 'build.log'
+
+            // Send a success email with the attached log
+            emailext subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
+                to: 'karthisk217@gmail.com',
+                body: 'The pipeline has succeeded. Build details are attached.',
+                attachLog: true
+        }
+
+        failure {
+            // Archive the build log
+            archiveArtifacts 'build.log'
+
+            // Send a failure email with the attached log
+            emailext subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                to: 'karthisk217@gmail.com',
+                body: 'The pipeline has failed. Build details are attached.',
+                attachLog: true
+        }
+    }
 }
