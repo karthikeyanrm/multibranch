@@ -3,38 +3,45 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
-        DEV_IMAGE_TAG = 'karthikeyanrm/devrepo:latest'
-        PROD_IMAGE_TAG = 'karthikeyanrm/prodrepo:latest'
     }
 
     stages {
-        stage('Build and Push Docker Image') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
             steps {
                 script {
                     // Build Docker Compose
                     sh 'docker-compose build'
+                    sh 'docker images'
                     
-                    // Tag the image based on branch
-                    def imageTag
-                    if (env.BRANCH_NAME == 'dev') {
-                        imageTag = DEV_IMAGE_TAG
-                    } else if (env.BRANCH_NAME == 'master') {
-                        imageTag = PROD_IMAGE_TAG
+                    // Define the Docker image tag based on the branch
+                    def dockerImageTag = ''
+                    if (env.BRANCH_NAME == '*/master') {
+                        dockerImageTag = 'karthikeyanrm/prodrepo:latest'
+                    } else if (env.BRANCH_NAME == '*/dev') {
+                        dockerImageTag = 'karthikeyanrm/devrepo:latest'
                     } else {
                         error "Unsupported branch: ${env.BRANCH_NAME}"
                     }
-                    sh "docker tag reactjs-demo:latest ${imageTag}"
+
+                    // Tag the image
+                    sh "docker tag reactjs-demo:latest $dockerImageTag"
 
                     // Log in to Docker Hub securely
                     withCredentials([
                         usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
                         sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh "docker push ${imageTag}"
+                        sh "docker push $dockerImageTag"
                     }
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
-                    sh "docker rmi -f ${imageTag}"
+                    sh "docker rmi -f $dockerImageTag"
                 }
             }
         }
@@ -43,7 +50,7 @@ pipeline {
             steps {
                 script {
                     // Check if any containers with the name "reactjscontainer" are either exited or running
-                    def containers_to_remove = sh(script: '''
+                    containers_to_remove = sh(script: '''
                         #!/bin/bash
 
                         # Check if any containers with the name "reactjscontainer" are either exited or running
@@ -53,7 +60,7 @@ pipeline {
                             echo "Found exited and/or running containers with the name 'reactjscontainer':"
                             echo "$containers_to_remove"
 
-                            # Stop and forcefully remove the containers
+                            // Stop and forcefully remove the containers
                             docker stop $containers_to_remove
                             docker rm -f $containers_to_remove
 
@@ -61,21 +68,11 @@ pipeline {
                         else {
                             echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
                         }
-                    ''', returnStatus: true, returnStdout: true).trim()
+                    ''', returnStdout: true).trim()
 
-                    // Pull the image based on branch
-                    def imageToPull
-                    if (env.BRANCH_NAME == 'dev') {
-                        imageToPull = DEV_IMAGE_TAG
-                    } else if (env.BRANCH_NAME == 'master') {
-                        imageToPull = PROD_IMAGE_TAG
-                    } else {
-                        error "Unsupported branch: ${env.BRANCH_NAME}"
-                    }
-                    sh "docker pull ${imageToPull}"
-
-                    // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer ${imageToPull}'
+                    // Pull and run the Docker image based on the branch
+                    sh "docker pull $dockerImageTag"
+                    sh "docker run -d -p 80:80 --name reactjscontainer $dockerImageTag"
                 }
             }
         }
