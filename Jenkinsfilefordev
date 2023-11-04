@@ -22,9 +22,9 @@ pipeline {
                                 credentialsId: DOCKER_HUB_CREDENTIAL_ID,
                                 usernameVariable: 'DOCKER_USERNAME',
                                 passwordVariable: 'MY_SECURE_PASSWORD'
-                            ]
+                            )
                         ]) {
-                            sh "docker login -u \$DOCKER_USERNAME -p \$MY_SECURE_PASSWORD"
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         }
 
                         // Add the additional Docker commands for 'dev'
@@ -38,17 +38,18 @@ pipeline {
                         sh 'docker pull karthikeyanrm/devrepo:latest'
                         sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
                     } else if (currentBranch ==~ /master/) {
+                        sh 'timedatectl'
+
                         // Log in to Docker Hub securely
                         withCredentials([
                             usernamePassword(
                                 credentialsId: DOCKER_HUB_CREDENTIAL_ID,
                                 usernameVariable: 'DOCKER_USERNAME',
                                 passwordVariable: 'MY_SECURE_PASSWORD'
-                            ]
+                            )
                         ]) {
-                            sh "docker login -u \$DOCKER_USERNAME -p \$MY_SECURE_PASSWORD"
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         }
-                        sh 'timedatectl'
 
                         // Add the additional Docker commands for 'master'
                         sh 'docker-compose build'
