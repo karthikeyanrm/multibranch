@@ -1,101 +1,103 @@
-pipeline {
-    agent any
+node {
+    pipeline {
+        agent any
 
-    environment {
-        DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
-    }
-
-    stages {
-        stage('Build') {
-            steps {
-                script {
-                    // Build Docker Compose
-                    sh 'docker-compose build'
-                    sh 'docker images'
-                    
-                    // Define the Docker image tag based on the branch
-                    def dockerImageTag = ''
-                    if (env.BRANCH_NAME == 'master') {
-                        dockerImageTag = 'karthikeyanrm/prodrepo:latest'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        dockerImageTag = 'karthikeyanrm/devrepo:latest'
-                    } else {
-                        error "Unsupported branch: ${env.BRANCH_NAME}"
-                    }
-
-                    // Tag the image
-                    sh "docker tag reactjs-demo:latest $dockerImageTag"
-
-                    // Log in to Docker Hub securely
-                    withCredentials([
-                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
-                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh "docker push $dockerImageTag"
-                    }
-
-                    // Remove local images
-                    sh 'docker rmi -f reactjs-demo:latest'
-                    sh "docker rmi -f $dockerImageTag"
-                }
-            }
+        environment {
+            DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
         }
-        
-        stage('Deploy') {
-            steps {
-                script {
-                    // Check if any containers with the name "reactjscontainer" are either exited or running
-                    containers_to_remove = sh(script: '''
-                        #!/bin/bash
 
-                        # Check if any containers with the name "reactjscontainer" are either exited or running
-                        containers_to_remove=$(docker ps -q --filter "name=reactjscontainer" --filter "status=exited" --filter "status=running")
-
-                        if [ -n "$containers_to_remove" ]; then
-                            echo "Found exited and/or running containers with the name 'reactjscontainer':"
-                            echo "$containers_to_remove"
-
-                            # Stop and forcefully remove the containers
-                            docker stop $containers_to_remove
-                            docker rm -f $containers_to_remove
-
-                            echo "Containers with the name 'reactjscontainer' have been removed."
-                        else {
-                            echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
+        stages {
+            stage('Build') {
+                steps {
+                    script {
+                        // Build Docker Compose
+                        sh 'docker-compose build'
+                        sh 'docker images'
+                        
+                        // Define the Docker image tag based on the branch
+                        def dockerImageTag = ''
+                        if (env.BRANCH_NAME == 'master') {
+                            dockerImageTag = 'karthikeyanrm/prodrepo:latest'
+                        } else if (env.BRANCH_NAME == 'dev') {
+                            dockerImageTag = 'karthikeyanrm/devrepo:latest'
+                        } else {
+                            error "Unsupported branch: ${env.BRANCH_NAME}"
                         }
-                    ''', returnStdout: true).trim()
 
-                    // Pull and run the Docker image based on the branch
-                    sh "docker pull $dockerImageTag"
-                    sh "docker run -d -p 80:80 --name reactjscontainer $dockerImageTag"
+                        // Tag the image
+                        sh "docker tag reactjs-demo:latest $dockerImageTag"
+
+                        // Log in to Docker Hub securely
+                        withCredentials([
+                            usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                            sh "docker push $dockerImageTag"
+                        }
+
+                        // Remove local images
+                        sh 'docker rmi -f reactjs-demo:latest'
+                        sh "docker rmi -f $dockerImageTag"
+                    }
+                }
+            }
+            
+            stage('Deploy') {
+                steps {
+                    script {
+                        // Check if any containers with the name "reactjscontainer" are either exited or running
+                        containers_to_remove = sh(script: '''
+                            #!/bin/bash
+
+                            # Check if any containers with the name "reactjscontainer" are either exited or running
+                            containers_to_remove=$(docker ps -q --filter "name=reactjscontainer" --filter "status=exited" --filter "status=running")
+
+                            if [ -n "$containers_to_remove" ]; then
+                                echo "Found exited and/or running containers with the name 'reactjscontainer':"
+                                echo "$containers_to_remove"
+
+                                // Stop and forcefully remove the containers
+                                docker stop $containers_to_remove
+                                docker rm -f $containers_to_remove
+
+                                echo "Containers with the name 'reactjscontainer' have been removed."
+                            else {
+                                echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
+                            }
+                        ''', returnStdout: true).trim()
+
+                        // Pull and run the Docker image based on the branch
+                        sh "docker pull $dockerImageTag"
+                        sh "docker run -d -p 80:80 --name reactjscontainer $dockerImageTag"
+                    }
                 }
             }
         }
-    }
 
-    post {
-        success {
-            script {
-                emailext to: 'karthisk217@gmail.com',
-                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
-                body: """The build #${BUILD_NUMBER} was successful. You can view the build log [here](${BUILD_URL}console).
+        post {
+            success {
+                script {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                    body: """The build #${BUILD_NUMBER} was successful. You can view the build log [here](${BUILD_URL}console).
 
-Docker Container Info:
-${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
-""",
-                attachLog: true // Attach build log for success email
+    Docker Container Info:
+    ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
+    """,
+                    attachLog: true // Attach build log for success email
+                }
             }
-        }
-        failure {
-            script {
-                emailext to: 'karthisk217@gmail.com',
-                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
-                body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
-                attachLog: true // Attach build log for failure email
+            failure {
+                script {
+                    emailext to: 'karthisk217@gmail.com',
+                    subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
+                    body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
+                    attachLog: true // Attach build log for failure email
+                }
             }
-        }
-        always {
-            // Log out from Docker Hub
-            sh 'docker logout'
+            always {
+                // Log out from Docker Hub
+                sh 'docker logout'
+            }
         }
     }
 }
