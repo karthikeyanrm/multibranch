@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -6,12 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Clean Workspace') {
-            steps {
-                cleanWs() // Clean the workspace
-            }
-        }
-
         stage('Conditional Execution') {
             steps {
                 script {
@@ -19,34 +14,44 @@ pipeline {
                     // Remove the "origin/" prefix if it exists
                     currentBranch = currentBranch.replaceAll("origin/", "")
 
-                    if (currentBranch ==~ /dev/ || currentBranch ==~ /master/) {
-                        // Define the Docker repository name based on the branch
-                        def repoName = currentBranch ==~ /dev/ ? 'devrepo' : 'prodrepo'
-                        // Define the Docker image tag
-                        def imageTag = currentBranch ==~ /dev/ ? 'dev' : 'latest'
+                    if (currentBranch ==~ /dev/) {
+                        sh 'ls -al'
 
-                        // Stage for both 'dev' and 'master' branches
-                        node {
-                            // Run inside a specific node to isolate Docker commands
-                            withCredentials([
-                                usernamePassword(
-                                    credentialsId: DOCKER_HUB_CREDENTIAL_ID,
-                                    usernameVariable: 'DOCKER_USERNAME',
-                                    passwordVariable: 'DOCKER_PASSWORD'
-                                )
-                            ]) {
-                                sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                                sh 'docker-compose build'
-                                sh "docker tag reactjs-demo:$imageTag karthikeyanrm/$repoName:$imageTag"
-                                sh "docker push karthikeyanrm/$repoName:$imageTag"
-                                sh "docker rmi -f reactjs-demo:$imageTag"
-                                sh "docker rmi -f karthikeyanrm/$repoName:$imageTag"
-                                sh 'chmod a+x containercheckscript.sh'
-                                sh './containercheckscript.sh'
-                                sh "docker pull karthikeyanrm/$repoName:$imageTag"
-                                sh "docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/$repoName:$imageTag"
-                            }
+                        // Log in to Docker Hub securely
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: DOCKER_HUB_CREDENTIAL_ID,
+                                usernameVariable: 'DOCKER_USERNAME',
+                                passwordVariable: 'MY_SECURE_PASSWORD'
+                            )
+                        ]) {
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         }
+
+                        // Add the additional Docker commands for 'dev'
+                        sh 'docker-compose build'
+                        sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
+                        sh 'docker push karthikeyanrm/devrepo:latest'
+                        sh 'docker rmi -f reactjs-demo:latest'
+                        sh 'docker rmi -f karthikeyanrm/devrepo:latest'
+                        sh 'chmod a+x containercheckscript.sh'
+                        sh './containercheckscript.sh'
+                        sh 'docker pull karthikeyanrm/devrepo:latest'
+                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
+                    } else if (currentBranch ==~ /master/) {
+                        sh 'timedatectl'
+
+                        // Add the additional Docker commands for 'master'
+                        sh 'docker-compose build'
+                        sh 'docker images'
+                        sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
+                        sh 'docker push karthikeyanrm/prodrepo:latest'
+                        sh 'docker rmi -f reactjs-demo:latest'
+                        sh 'docker rmi -f karthikeyanrm/prodrepo:latest'
+                        sh 'chmod a+x containercheckscript.sh'
+                        sh './containercheckscript.sh'
+                        sh 'docker pull karthikeyanrm/prodrepo:latest'
+                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:latest'
                     } else {
                         echo "Branch not recognized: $currentBranch"
                     }
