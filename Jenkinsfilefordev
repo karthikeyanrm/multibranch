@@ -6,10 +6,12 @@ pipeline {
             steps {
                 script {
                     def currentBranch = env.GIT_BRANCH
+                    // Remove the "origin/" prefix if it exists
+                    currentBranch = currentBranch.replaceAll("origin/", "")
 
-                    if (currentBranch ==~ /refs\/heads\/dev/) {
+                    if (currentBranch ==~ /dev/) {
                         sh 'ls -al'
-                    } else if (currentBranch ==~ /refs\/heads\/master/) {
+                    } else if (currentBranch ==~ /master/) {
                         sh 'timedatectl'
                     } else {
                         echo "Branch not recognized: $currentBranch"
