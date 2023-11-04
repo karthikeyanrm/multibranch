@@ -1,68 +1,46 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
-        CONTAINER_NAME = 'reactjscontainer'
-        DEV_IMAGE_NAME = 'karthikeyanrm/devrepo:latest'
-        PROD_IMAGE_NAME = 'karthikeyanrm/prodrepo:latest'
-    }
-
+    
     stages {
-        stage('Build and Deploy') {
-            when {
-                expression { true } // Always execute this stage
-            }
+        stage('Checkout') {
             steps {
                 script {
-                    // Determine the image name based on the branch
-                    def imageName = branch == 'master' ? PROD_IMAGE_NAME : DEV_IMAGE_NAME
-
-                    // Build Docker Compose or your application
-                    sh 'docker-compose build' // Change to your build command if not using Docker Compose
-
-                    // Tag the image
-                    sh "docker tag reactjs-demo:latest $imageName"
-
-                    // Log in to Docker Hub securely
-                    withCredentials([
-                        usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
-                        sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh "docker push $imageName"
-                    }
-
-                    // Remove local images
-                    sh 'docker rmi -f reactjs-demo:latest'
-                    sh "docker rmi -f $imageName"
+                    // Checkout the source code from the repository
+                    checkout scm
                 }
             }
         }
-    }
-
-    post {
-        success {
-            script {
-                emailext to: 'karthisk217@gmail.com',
-                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
-                body: """The build #${BUILD_NUMBER} was successful. You can view the build log [here](${BUILD_URL}console).
-
-Docker Container Info:
-${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
-""",
-                attachLog: true // Attach build log for success email
+        
+        stage('Conditional Actions') {
+            when {
+                expression {
+                    // Check if the branch name is 'dev'
+                    return env.BRANCH_NAME == 'dev'
+                }
+            }
+            steps {
+                // This step will only execute if the branch is 'dev'
+                script {
+                    // Start Docker Compose with your desired services
+                    sh 'docker-compose up -d'
+                }
             }
         }
-        failure {
-            script {
-                emailext to: 'karthisk217@gmail.com',
-                subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS',
-                body: "The build #${BUILD_NUMBER} has failed. You can view the build log [here](${BUILD_URL}console)".toString(),
-                attachLog: true // Attach build log for failure email
+        
+        stage('Another Conditional Action') {
+            when {
+                expression {
+                    // Check if the branch name is 'master'
+                    return env.BRANCH_NAME == 'master'
+                }
             }
-        }
-        always {
-            // Log out from Docker Hub
-            sh 'docker logout'
+            steps {
+                // This step will only execute if the branch is 'master'
+                script {
+                    // List files in the current directory
+                    sh 'ls -al'
+                }
+            }
         }
     }
 }
