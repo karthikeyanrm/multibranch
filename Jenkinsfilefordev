@@ -44,20 +44,18 @@ pipeline {
                                     credentialsId: DOCKER_HUB_CREDENTIAL_ID,
                                     usernameVariable: 'DOCKER_USERNAME',
                                     passwordVariable: 'DOCKER_PASSWORD'
-                                )
-                            }) {
-                                sh 'timedatectl'
-                                sh 'docker-compose build'
-                                sh 'docker images'
-                                sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
-                                sh 'docker push karthikeyanrm/prodrepo:latest'
-                                sh 'docker rmi -f reactjs-demo:latest'
-                                sh 'docker rmi -f karthikeyanrm/prodrepo:latest'
-                                sh 'chmod a+x containercheckscript.sh'
-                                sh './containercheckscript.sh'
-                                sh 'docker pull karthikeyanrm/prodrepo:latest'
-                                sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:latest'
-                            }
+                                ])
+                            sh 'timedatectl'
+                            sh 'docker-compose build'
+                            sh 'docker images'
+                            sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
+                            sh 'docker push karthikeyanrm/prodrepo:latest'
+                            sh 'docker rmi -f reactjs-demo:latest'
+                            sh 'docker rmi -f karthikeyanrm/prodrepo:latest'
+                            sh 'chmod a+x containercheckscript.sh'
+                            sh './containercheckscript.sh'
+                            sh 'docker pull karthikeyanrm/prodrepo:latest'
+                            sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:latest'
                         }
                     } else {
                         echo "Branch not recognized: $currentBranch"
