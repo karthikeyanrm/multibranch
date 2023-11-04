@@ -37,7 +37,10 @@ pipeline {
                         sh './containercheckscript.sh'
                         sh 'docker pull karthikeyanrm/devrepo:latest'
                         sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
-                    } else if (currentBranch ==~ /master/) {
+                    } else if (currentBranch ==~ /master/) 
+                         {
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                        }{
                         sh 'timedatectl'
 
                         // Add the additional Docker commands for 'master'
