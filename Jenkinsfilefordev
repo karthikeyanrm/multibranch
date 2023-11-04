@@ -3,28 +3,38 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIAL_ID = 'kndocker' // Updated credential ID
+        DEV_IMAGE_TAG = 'karthikeyanrm/devrepo:latest'
+        PROD_IMAGE_TAG = 'karthikeyanrm/prodrepo:latest'
     }
 
     stages {
-        stage('Build') {
+        stage('Build and Push Docker Image') {
             steps {
                 script {
                     // Build Docker Compose
                     sh 'docker-compose build'
                     
-                    // Tag the image
-                    sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
+                    // Tag the image based on branch
+                    def imageTag
+                    if (env.BRANCH_NAME == 'dev') {
+                        imageTag = DEV_IMAGE_TAG
+                    } else if (env.BRANCH_NAME == 'master') {
+                        imageTag = PROD_IMAGE_TAG
+                    } else {
+                        error "Unsupported branch: ${env.BRANCH_NAME}"
+                    }
+                    sh "docker tag reactjs-demo:latest ${imageTag}"
 
                     // Log in to Docker Hub securely
                     withCredentials([
                         usernamePassword(credentialsId: DOCKER_HUB_CREDENTIAL_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'MY_SECURE_PASSWORD')]) {
                         sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                        sh 'docker push karthikeyanrm/devrepo:latest'
+                        sh "docker push ${imageTag}"
                     }
 
                     // Remove local images
                     sh 'docker rmi -f reactjs-demo:latest'
-                    sh 'docker rmi -f karthikeyanrm/devrepo:latest'
+                    sh "docker rmi -f ${imageTag}"
                 }
             }
         }
@@ -33,7 +43,7 @@ pipeline {
             steps {
                 script {
                     // Check if any containers with the name "reactjscontainer" are either exited or running
-                    containers_to_remove = sh(script: '''
+                    def containers_to_remove = sh(script: '''
                         #!/bin/bash
 
                         # Check if any containers with the name "reactjscontainer" are either exited or running
@@ -48,16 +58,24 @@ pipeline {
                             docker rm -f $containers_to_remove
 
                             echo "Containers with the name 'reactjscontainer' have been removed."
-                        else
+                        else {
                             echo "No exited or running containers with the name 'reactjscontainer' found. Proceeding to the next step."
-                        fi
-                    ''', returnStdout: true).trim()
+                        }
+                    ''', returnStatus: true, returnStdout: true).trim()
 
-                    // Pull the image
-                    sh 'docker pull karthikeyanrm/devrepo:latest'
+                    // Pull the image based on branch
+                    def imageToPull
+                    if (env.BRANCH_NAME == 'dev') {
+                        imageToPull = DEV_IMAGE_TAG
+                    } else if (env.BRANCH_NAME == 'master') {
+                        imageToPull = PROD_IMAGE_TAG
+                    } else {
+                        error "Unsupported branch: ${env.BRANCH_NAME}"
+                    }
+                    sh "docker pull ${imageToPull}"
 
                     // Run the container
-                    sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
+                    sh 'docker run -d -p 80:80 --name reactjscontainer ${imageToPull}'
                 }
             }
         }
@@ -72,11 +90,7 @@ pipeline {
 
 Docker Container Info:
 ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v public_ip=$(curl -s ifconfig.me) \'{print "Container:", $1, "Public IP:", public_ip, "Port Mapping:", $2}\'', returnStdout: true)}
-
-Dev build is success do changes in your Jenkinsfile and merge it to the master for the production
 """,
-
-
                 attachLog: true // Attach build log for success email
             }
         }
