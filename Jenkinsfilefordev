@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -39,9 +38,21 @@ pipeline {
                         sh 'docker pull karthikeyanrm/devrepo:latest'
                         sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
                     } else if (currentBranch ==~ /master/) {
+                        // Log in to Docker Hub securely
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: DOCKER_HUB_CREDENTIAL_ID,
+                                usernameVariable: 'DOCKER_USERNAME',
+                                passwordVariable: 'MY_SECURE_PASSWORD'
+                            )
+                        ]) {
+                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                            sh 'docker push karthikeyanrm/devrepo:latest'
+                        }
                         sh 'timedatectl'
 
                         // Add the additional Docker commands for 'master'
+                        sh 'docker login -u $DOCKER_USERNAME -p $MY_SECURE_PASSWORD'
                         sh 'docker-compose build'
                         sh 'docker images'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
