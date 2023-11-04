@@ -11,7 +11,7 @@ pipeline {
                 script {
                     def currentBranch = env.GIT_BRANCH
                     // Remove the "origin/" prefix if it exists
-                   
+                    currentBranch = currentBranch.replaceAll("origin/", "")
 
                     if (currentBranch ==~ /dev/) {
                         // Stage for 'dev' branch
