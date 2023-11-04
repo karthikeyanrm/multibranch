@@ -36,7 +36,13 @@ pipeline {
                                 )
                             ]) {
                                 sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                                
+                                sh 'docker-compose build'
+                                sh "docker tag reactjs-demo:$imageTag karthikeyanrm/$repoName:$imageTag"
+                                sh "docker push karthikeyanrm/$repoName:$imageTag"
+                                sh "docker rmi -f reactjs-demo:$imageTag"
+                                sh "docker rmi -f karthikeyanrm/$repoName:$imageTag"
+                                sh 'chmod a+x containercheckscript.sh'
+                                sh './containercheckscript.sh'
                                 sh "docker pull karthikeyanrm/$repoName:$imageTag"
                                 sh "docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/$repoName:$imageTag"
                             }
