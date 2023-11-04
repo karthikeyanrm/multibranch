@@ -32,7 +32,7 @@ pipeline {
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
                         sh 'docker push karthikeyanrm/devrepo:latest'
                         sh 'docker rmi -f reactjs-demo:latest'
-                        docker rmi -f karthikeyanrm/devrepo:latest
+                        sh 'docker rmi -f karthikeyanrm/devrepo:latest'
                         sh 'chmod a+x containercheckscript.sh'
                         sh './containercheckscript.sh'
                         sh 'docker pull karthikeyanrm/devrepo:latest'
