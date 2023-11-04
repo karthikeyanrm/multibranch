@@ -5,11 +5,11 @@ pipeline {
         stage('Conditional Execution') {
             steps {
                 script {
-                    def currentBranch = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    def currentBranch = env.GIT_BRANCH
 
-                    if (currentBranch == 'dev') {
+                    if (currentBranch ==~ /refs\/heads\/dev/) {
                         sh 'ls -al'
-                    } else if (currentBranch == 'master') {
+                    } else if (currentBranch ==~ /refs\/heads\/master/) {
                         sh 'timedatectl'
                     } else {
                         echo "Branch not recognized: $currentBranch"
