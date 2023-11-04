@@ -22,9 +22,9 @@ pipeline {
                                 credentialsId: DOCKER_HUB_CREDENTIAL_ID,
                                 usernameVariable: 'DOCKER_USERNAME',
                                 passwordVariable: 'MY_SECURE_PASSWORD'
-                            )
+                            ]
                         ]) {
-                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                            sh "docker login -u \$DOCKER_USERNAME -p \$MY_SECURE_PASSWORD"
                         }
 
                         // Add the additional Docker commands for 'dev'
@@ -44,15 +44,13 @@ pipeline {
                                 credentialsId: DOCKER_HUB_CREDENTIAL_ID,
                                 usernameVariable: 'DOCKER_USERNAME',
                                 passwordVariable: 'MY_SECURE_PASSWORD'
-                            )
+                            ]
                         ]) {
-                            sh "echo \$MY_SECURE_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
-                            sh 'docker push karthikeyanrm/devrepo:latest'
+                            sh "docker login -u \$DOCKER_USERNAME -p \$MY_SECURE_PASSWORD"
                         }
                         sh 'timedatectl'
 
                         // Add the additional Docker commands for 'master'
-                        sh 'docker login -u $DOCKER_USERNAME -p $MY_SECURE_PASSWORD'
                         sh 'docker-compose build'
                         sh 'docker images'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
