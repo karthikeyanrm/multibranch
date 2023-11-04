@@ -92,4 +92,10 @@ ${sh(script: 'docker ps --format "{{.Names}}\\t{{.Ports}}" | awk -F "\\t" -v pub
             }
         }
     }
+    
+    always {
+        // Log out from Docker Hub
+        sh 'docker logout'
+    }
 }
+
