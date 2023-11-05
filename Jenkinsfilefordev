@@ -54,14 +54,14 @@ pipeline {
                         // Add the additional Docker commands for 'master'
                         sh './build.sh'
                         sh 'docker images'
-                        sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:latest'
-                        sh 'docker push karthikeyanrm/prodrepo:latest'
+                        sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:01'
+                        sh 'docker push karthikeyanrm/prodrepo:01'
                         sh 'docker rmi -f reactjs-demo:latest'
-                        sh 'docker rmi -f karthikeyanrm/prodrepo:latest'
+                        sh 'docker rmi -f karthikeyanrm/prodrepo:01'
                         sh 'chmod a+x containercheckscript.sh'
                         sh './containercheckscript.sh'
-                        sh 'docker pull karthikeyanrm/prodrepo:latest'
-                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:latest'
+                        sh 'docker pull karthikeyanrm/prodrepo:01'
+                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:01'
                     } else {
                         echo "Branch not recognized: $currentBranch"
                     }
