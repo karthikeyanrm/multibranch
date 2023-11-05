@@ -52,7 +52,6 @@ pipeline {
 
                         // Add the additional Docker commands for 'master'
                         sh './build.sh'
-                        sh 'docker images'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/prodrepo:01'
                         sh 'docker push karthikeyanrm/prodrepo:01'
                         sh 'docker rmi -f reactjs-demo:latest'
