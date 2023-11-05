@@ -28,7 +28,7 @@ pipeline {
                         }
 
                         // Add the additional Docker commands for 'dev'
-                        sh 'docker-compose build'
+                        sh './build.sh'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
                         sh 'docker push karthikeyanrm/devrepo:latest'
                         sh 'docker rmi -f reactjs-demo:latest'
