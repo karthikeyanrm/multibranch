@@ -28,15 +28,14 @@ pipeline {
                         }
 
                         // Add the additional Docker commands for 'dev'
-                        sh 'docker-compose build'
+                        sh './build.sh'
                         sh 'docker tag reactjs-demo:latest karthikeyanrm/devrepo:latest'
                         sh 'docker push karthikeyanrm/devrepo:latest'
                         sh 'docker rmi -f reactjs-demo:latest'
                         sh 'docker rmi -f karthikeyanrm/devrepo:latest'
-                        sh 'chmod a+x containercheckscript.sh'
-                        sh './containercheckscript.sh'
-                        sh 'docker pull karthikeyanrm/devrepo:latest'
-                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/devrepo:latest'
+                        sh 'docker-compose down'
+                        sh 'docker-compose -f docker-compose-dev.yml up -d'
+                        
                     } else if (currentBranch ==~ /master/) {
                         sh 'timedatectl'
 
@@ -58,10 +57,8 @@ pipeline {
                         sh 'docker push karthikeyanrm/prodrepo:01'
                         sh 'docker rmi -f reactjs-demo:latest'
                         sh 'docker rmi -f karthikeyanrm/prodrepo:01'
-                        sh 'chmod a+x containercheckscript.sh'
-                        sh './containercheckscript.sh'
-                        sh 'docker pull karthikeyanrm/prodrepo:01'
-                        sh 'docker run -d -p 80:80 --name reactjscontainer karthikeyanrm/prodrepo:01'
+                        sh 'docker-compose down'
+                        sh 'docker-compose -f docker-compose-prod.yml up -d'
                     } else {
                         echo "Branch not recognized: $currentBranch"
                     }
