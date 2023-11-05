@@ -14,8 +14,7 @@ pipeline {
                     currentBranch = currentBranch.replaceAll("origin/", "")
 
                     if (currentBranch ==~ /dev/) {
-                        sh 'ls -al'
-
+                        
                         // Log in to Docker Hub securely
                         withCredentials([
                             usernamePassword(
@@ -37,8 +36,7 @@ pipeline {
                         sh 'docker-compose -f docker-compose-dev.yml up -d'
                         
                     } else if (currentBranch ==~ /master/) {
-                        sh 'timedatectl'
-
+                       
                         // Log in to Docker Hub securely
                         withCredentials([
                             usernamePassword(
