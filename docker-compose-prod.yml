@@ -2,6 +2,6 @@ version: '3'
 services:
   web:
     container_name: reactjscontainer
-    image: karthikeyanrm/prodrepo:latest
+    image: karthikeyanrm/prodrepo:01
     ports:
       - "80:80"
