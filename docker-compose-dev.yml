@@ -1,0 +1,7 @@
+version: '3'
+services:
+  web:
+    container_name: reactjscontainer
+    image: karthikeyanrm/devrepo:latest
+    ports:
+      - "80:80"
